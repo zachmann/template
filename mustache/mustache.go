@@ -43,7 +43,10 @@ type fileSystemPartialProvider struct {
 }
 
 func (p fileSystemPartialProvider) Get(path string)(string,error) {
-	buf, _ := utils.ReadFile(path, p.fileSystem)
+	buf, err := utils.ReadFile(path, p.fileSystem)
+	if err != nil {
+		fmt.Println(err)
+	}
 	return string(buf), nil
 }
 
