@@ -40,10 +40,11 @@ type Engine struct {
 
 type fileSystemPartialProvider struct {
 	fileSystem http.FileSystem
+	extension string
 }
 
 func (p fileSystemPartialProvider) Get(path string)(string,error) {
-	buf, err := utils.ReadFile(path, p.fileSystem)
+	buf, err := utils.ReadFile(path+p.extension, p.fileSystem)
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -72,7 +73,7 @@ func NewFileSystem(fs http.FileSystem, extension string) *Engine {
 
 func NewFileSystemPartials(fs http.FileSystem, extension string, partialsFS http.FileSystem) *Engine {
 	engine := NewFileSystem(fs, extension)
-	engine.partialsProvider = &fileSystemPartialProvider{fileSystem: partialsFS}
+	engine.partialsProvider = &fileSystemPartialProvider{fileSystem: partialsFS, extension: extension}
 	return engine
 }
 
