@@ -20,7 +20,7 @@ type Engine struct {
 	directory string
 	// http.FileSystem supports embedded files
 	fileSystem http.FileSystem
-	// partialsProvider for embedded files
+	// partialsProvider supports partials for embedded files
 	partialsProvider *fileSystemPartialProvider
 	// views extension
 	extension string
@@ -44,7 +44,7 @@ type fileSystemPartialProvider struct {
 }
 
 func (p fileSystemPartialProvider) Get(path string)(string,error) {
-	buf, err := utils.ReadFile(path+p.extension, p.fileSystem)
+	buf, err := utils.ReadFile(path + p.extension, p.fileSystem)
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -61,6 +61,7 @@ func New(directory, extension string) *Engine {
 	return engine
 }
 
+// NewFileSystem returns a Handlebar render engine for Fiber supporting embedded files
 func NewFileSystem(fs http.FileSystem, extension string) *Engine {
 	engine := &Engine{
 		directory:  "/",
@@ -71,9 +72,13 @@ func NewFileSystem(fs http.FileSystem, extension string) *Engine {
 	return engine
 }
 
+// NewFileSystemPartials returns a Handlebar render engine for Fiber supporting embedded files
 func NewFileSystemPartials(fs http.FileSystem, extension string, partialsFS http.FileSystem) *Engine {
 	engine := NewFileSystem(fs, extension)
-	engine.partialsProvider = &fileSystemPartialProvider{fileSystem: partialsFS, extension: extension}
+	engine.partialsProvider = &fileSystemPartialProvider{
+		fileSystem: partialsFS,
+		extension: extension,
+	}
 	return engine
 }
 
