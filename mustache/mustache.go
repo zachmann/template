@@ -20,6 +20,8 @@ type Engine struct {
 	directory string
 	// http.FileSystem supports embedded files
 	fileSystem http.FileSystem
+	// partialsProvider for embedded files
+	partialsProvider *fileSystemPartialProvider
 	// views extension
 	extension string
 	// layout variable name that incapsulates the template
@@ -34,6 +36,15 @@ type Engine struct {
 	mutex sync.RWMutex
 	// templates
 	Templates map[string]*mustache.Template
+}
+
+type fileSystemPartialProvider struct {
+	fileSystem http.FileSystem
+}
+
+func (p fileSystemPartialProvider) Get(path string)(string,error) {
+	buf, _ := utils.ReadFile(path, p.fileSystem)
+	return string(buf), nil
 }
 
 // New returns a Handlebar render engine for Fiber
@@ -53,6 +64,12 @@ func NewFileSystem(fs http.FileSystem, extension string) *Engine {
 		extension:  extension,
 		layout:     "embed",
 	}
+	return engine
+}
+
+func NewFileSystemPartials(fs http.FileSystem, extension string, partialsFS http.FileSystem) *Engine {
+	engine := NewFileSystem(fs, extension)
+	engine.partialsProvider = &fileSystemPartialProvider{fileSystem: partialsFS}
 	return engine
 }
 
@@ -134,8 +151,12 @@ func (e *Engine) Load() error {
 		}
 		// Create new template associated with the current one
 		// This enable use to invoke other templates {{ template .. }}
-		tmpl, err := mustache.ParseString(string(buf))
-		//mustache.ParseStringPartials()
+		var tmpl *mustache.Template
+		if e.partialsProvider != nil {
+			tmpl, err = mustache.ParseStringPartials(string(buf),e.partialsProvider)
+		} else{
+		tmpl, err = mustache.ParseString(string(buf))
+		}
 		if err != nil {
 			return err
 		}
